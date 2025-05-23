@@ -309,105 +309,26 @@ const bulkUploadStocks = async (req, res) => {
       });
     }
 
-    const validProducts = ["Ed-Tech", "Furniture", "AV"];
-    const validCategories = ["Private", "Government"];
-    const validStatuses = [
-      "Interested",
-      "Not Interested",
-      "Maybe",
-      "Not Found",
-    ];
-    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
-    const mobileRegex = /^\d{10}$/;
-
-    const validatedEntries = newEntries.map((entry, index) => {
-      const requiredFields = [
-        "customerName",
-        "email",
-        "mobileNumber",
-        "product",
-        "address",
-        "organization",
-        "category",
-        "city",
-        "state",
-      ];
-
-      // Check for missing or empty required fields
-      for (const field of requiredFields) {
-        if (!entry[field] || entry[field].trim() === "") {
-          throw new Error(
-            `Row ${index + 1}: ${
-              field === "city"
-                ? "District"
-                : field.replace(/([A-Z])/g, " $1").trim()
-            } is required`
-          );
-        }
-      }
-
-      // Validate email format
-      if (!emailRegex.test(entry.email.trim())) {
-        throw new Error(
-          `Row ${index + 1}: Email must be a valid email address`
-        );
-      }
-
-      // Validate mobile number
-      if (!mobileRegex.test(entry.mobileNumber.trim())) {
-        throw new Error(
-          `Row ${index + 1}: Mobile Number must be exactly 10 digits`
-        );
-      }
-
-      // Validate product enum
-      if (!validProducts.includes(entry.product.trim())) {
-        throw new Error(
-          `Row ${
-            index + 1
-          }: Product must be one of 'Ed-Tech', 'Furniture', or 'AV'`
-        );
-      }
-
-      // Validate category enum
-      if (!validCategories.includes(entry.category.trim())) {
-        throw new Error(
-          `Row ${index + 1}: Category must be one of 'Private' or 'Government'`
-        );
-      }
-
-      // Validate status if provided
-      let status = "Not Found";
-      if (entry.status && entry.status.trim()) {
-        if (!validStatuses.includes(entry.status.trim())) {
-          throw new Error(
-            `Row ${
-              index + 1
-            }: Status must be one of 'Interested', 'Not Interested', 'Maybe', or 'Not Found'`
-          );
-        }
-        status = entry.status.trim();
-      }
-
+    const validatedEntries = newEntries.map((entry) => {
       // Generate createdAt and updatedAt
-      const createdAt = new Date(); // Generate createdAt server-side
-      const updatedAt = new Date(); // Generate updatedAt server-side
+      const createdAt = new Date();
+      const updatedAt = new Date();
 
       return {
-        customerName: entry.customerName.trim(),
-        email: entry.email.trim(),
-        mobileNumber: entry.mobileNumber.trim(),
-        product: entry.product.trim(),
-        address: entry.address.trim(),
-        organization: entry.organization.trim(),
-        category: entry.category.trim(),
-        city: entry.city.trim(),
-        state: entry.state.trim(),
-        status,
+        customerName: entry.customerName ? entry.customerName.trim() : "",
+        email: entry.email ? entry.email.trim() : "",
+        mobileNumber: entry.mobileNumber ? entry.mobileNumber.trim() : "",
+        product: entry.product ? entry.product.trim() : "",
+        address: entry.address ? entry.address.trim() : "",
+        organization: entry.organization ? entry.organization.trim() : "",
+        category: entry.category ? entry.category.trim() : "",
+        city: entry.city ? entry.city.trim() : "",
+        state: entry.state ? entry.state.trim() : "",
+        status: entry.status ? entry.status.trim() : "Not Found",
         remarks: entry.remarks ? entry.remarks.trim() : "",
         createdAt,
         updatedAt,
-        createdBy: req.user.id, // Set server-side
+        createdBy: req.user.id,
       };
     });
 
