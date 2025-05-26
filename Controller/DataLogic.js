@@ -17,17 +17,15 @@ const DataentryLogic = async (req, res) => {
       organization,
       category,
       status,
-
       remarks,
     } = req.body;
 
-    // Validate required fields
+    // Validate required fields (excluding state and city)
     const requiredFields = {
       customerName,
       email,
       mobileNumber,
       address,
-
       product,
       organization,
       category,
@@ -58,13 +56,13 @@ const DataentryLogic = async (req, res) => {
       email: email.trim(),
       address: address.trim(),
       product: product.trim(),
-      state: state.trim(),
-      city: city.trim(),
+      // Include state and city without validation, default to empty string if undefined
+      state: state ? state.trim() : "",
+      city: city ? city.trim() : "",
       organization: organization.trim(),
       category: category.trim(),
       createdBy: req.user.id,
       ...(status && { status }),
-
       ...(remarks && { remarks: remarks.trim() }),
     });
 
