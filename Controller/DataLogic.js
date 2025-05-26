@@ -27,8 +27,7 @@ const DataentryLogic = async (req, res) => {
       email,
       mobileNumber,
       address,
-      state,
-      city,
+
       product,
       organization,
       category,
