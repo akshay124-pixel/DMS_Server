@@ -59,17 +59,11 @@ const EntrySchema = new mongoose.Schema({
   },
   city: {
     type: String,
-    // required: [true, "City is required"],
     trim: true,
-    minlength: [1, "City must be at least 1 character"],
-    maxlength: [50, "City cannot exceed 50 characters"],
   },
   state: {
     type: String,
-    // required: [true, "State is required"],
     trim: true,
-    minlength: [2, "State must be at least 2 characters"],
-    maxlength: [50, "State cannot exceed 50 characters"],
   },
   status: {
     type: String,
