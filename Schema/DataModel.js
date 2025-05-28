@@ -25,6 +25,11 @@ const EntrySchema = new mongoose.Schema({
     trim: true,
     match: [/^\d{10}$/, "Mobile number must be exactly 10 digits"],
   },
+  AlterNumber: {
+    type: String,
+    trim: true,
+    match: [/^\d{10}$/, "Mobile number must be exactly 10 digits"],
+  },
   product: {
     type: String,
     required: [true, "Product is required"],

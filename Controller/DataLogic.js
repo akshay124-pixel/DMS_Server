@@ -9,6 +9,7 @@ const DataentryLogic = async (req, res) => {
     const {
       customerName,
       mobileNumber,
+      AlterNumber,
       email,
       address,
       state,
@@ -25,6 +26,7 @@ const DataentryLogic = async (req, res) => {
       customerName,
       email,
       mobileNumber,
+      AlterNumber,
       address,
       product,
       organization,
@@ -53,6 +55,7 @@ const DataentryLogic = async (req, res) => {
     const newEntry = new Entry({
       customerName: customerName.trim(),
       mobileNumber: mobileNumber.trim(),
+      AlterNumber: AlterNumber.trim(),
       email: email.trim(),
       address: address.trim(),
       product: product.trim(),
@@ -104,6 +107,7 @@ const exportentry = async (req, res) => {
     const formattedEntries = entries.map((entry) => ({
       customerName: entry.customerName,
       mobileNumber: entry.mobileNumber,
+      AlterNumber: entry.AlterNumber,
       email: entry.email,
       address: entry.address,
       state: entry.state,
@@ -204,6 +208,7 @@ const editEntry = async (req, res) => {
     const {
       customerName,
       mobileNumber,
+      AlterNumber,
       email,
       address,
       state,
@@ -212,7 +217,6 @@ const editEntry = async (req, res) => {
       organization,
       category,
       status,
-
       remarks,
     } = req.body;
 
@@ -250,6 +254,7 @@ const editEntry = async (req, res) => {
     const updateData = {
       ...(customerName !== undefined && { customerName: customerName.trim() }),
       ...(mobileNumber !== undefined && { mobileNumber: mobileNumber.trim() }),
+      ...(AlterNumber !== undefined && { AlterNumber: AlterNumber.trim() }),
       ...(email !== undefined && { email: email.trim() }),
       ...(address !== undefined && { address: address.trim() }),
       ...(state !== undefined && { state: state.trim() }),
@@ -315,6 +320,7 @@ const bulkUploadStocks = async (req, res) => {
         customerName: entry.customerName ? entry.customerName.trim() : "",
         email: entry.email ? entry.email.trim() : "",
         mobileNumber: entry.mobileNumber ? entry.mobileNumber.trim() : "",
+        AlterNumber: entry.AlterNumber ? entry.AlterNumber.trim() : "",
         product: entry.product ? entry.product.trim() : "",
         address: entry.address ? entry.address.trim() : "",
         organization: entry.organization ? entry.organization.trim() : "",
