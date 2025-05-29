@@ -311,27 +311,27 @@ const bulkUploadStocks = async (req, res) => {
       });
     }
 
+    // Map entries to match the export format exactly
     const validatedEntries = newEntries.map((entry) => {
-      // Generate createdAt and updatedAt
       const createdAt = new Date();
       const updatedAt = new Date();
 
       return {
-        customerName: entry.customerName ? entry.customerName.trim() : "",
-        email: entry.email ? entry.email.trim() : "",
-        mobileNumber: entry.mobileNumber ? entry.mobileNumber.trim() : "",
-        AlterNumber: entry.AlterNumber ? entry.AlterNumber.trim() : "",
-        product: entry.product ? entry.product.trim() : "",
-        address: entry.address ? entry.address.trim() : "",
-        organization: entry.organization ? entry.organization.trim() : "",
-        category: entry.category ? entry.category.trim() : "",
-        city: entry.city ? entry.city.trim() : "",
-        state: entry.state ? entry.state.trim() : "",
-        status: entry.status ? entry.status.trim() : "Not Found",
-        remarks: entry.remarks ? entry.remarks.trim() : "",
+        customerName: entry["Customer Name"] || "",
+        email: entry["Email"] || "",
+        mobileNumber: entry["Contact Number"] || "",
+        AlterNumber: entry["Alternate Number"] || "",
+        product: entry["Product"] || "",
+        address: entry["Address"] || "",
+        organization: entry["Organization"] || "",
+        category: entry["Category"] || "",
+        city: entry["District"] || "",
+        state: entry["State"] || "",
+        status: entry["Status"] || "Not Found",
+        remarks: entry["Remarks"] || "",
         createdAt,
         updatedAt,
-        createdBy: req.user.id,
+        createdBy: req.user.id, // Set createdBy to the authenticated user
       };
     });
 
