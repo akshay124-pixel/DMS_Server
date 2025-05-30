@@ -8,6 +8,12 @@ const EntrySchema = new mongoose.Schema({
     minlength: [1, "Customer name must be at least 1 character"],
     maxlength: [100, "Customer name cannot exceed 100 characters"],
   },
+  contactName: {
+    type: String,
+  
+    trim: true,
+  
+  },
   email: {
     type: String,
     required: [true, "Customer email is required"],

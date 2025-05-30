@@ -8,6 +8,7 @@ const DataentryLogic = async (req, res) => {
   try {
     const {
       customerName,
+      contactName,
       mobileNumber,
       AlterNumber,
       email,
@@ -55,6 +56,7 @@ const DataentryLogic = async (req, res) => {
     const newEntry = new Entry({
       customerName: customerName.trim(),
       mobileNumber: mobileNumber.trim(),
+      contactName: contactName.trim(),
       AlterNumber: AlterNumber.trim(),
       email: email.trim(),
       address: address.trim(),
@@ -106,6 +108,7 @@ const exportentry = async (req, res) => {
 
     const formattedEntries = entries.map((entry) => ({
       customerName: entry.customerName,
+      contactName: entry.contactName,
       mobileNumber: entry.mobileNumber,
       AlterNumber: entry.AlterNumber,
       email: entry.email,
@@ -207,6 +210,7 @@ const editEntry = async (req, res) => {
   try {
     const {
       customerName,
+      contactName,
       mobileNumber,
       AlterNumber,
       email,
@@ -253,6 +257,7 @@ const editEntry = async (req, res) => {
 
     const updateData = {
       ...(customerName !== undefined && { customerName: customerName.trim() }),
+      ...(contactName !== undefined && { contactName: contactName.trim() }),
       ...(mobileNumber !== undefined && { mobileNumber: mobileNumber.trim() }),
       ...(AlterNumber !== undefined && { AlterNumber: AlterNumber.trim() }),
       ...(email !== undefined && { email: email.trim() }),
@@ -318,6 +323,7 @@ const bulkUploadStocks = async (req, res) => {
 
       return {
         customerName: entry["Customer Name"] || "",
+        contactName: entry["Contact Person"] || "",
         email: entry["Email"] || "",
         mobileNumber: entry["Contact Number"] || "",
         AlterNumber: entry["Alternate Number"] || "",
