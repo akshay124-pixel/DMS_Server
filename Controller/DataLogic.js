@@ -337,7 +337,7 @@ const bulkUploadStocks = async (req, res) => {
         remarks: entry["Remarks"] || "",
         createdAt,
         updatedAt,
-        createdBy,
+        createdBy: req.user.id,
       };
     });
 
