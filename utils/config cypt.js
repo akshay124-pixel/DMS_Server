@@ -1,5 +1,3 @@
-const crypto = require("crypto");
-
-const secretkey = crypto.randomBytes(32).toString("hex");
+const secretkey = "My_DMS";
 
 module.exports = secretkey;
