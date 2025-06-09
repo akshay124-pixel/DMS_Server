@@ -55,7 +55,7 @@ const EntrySchema = new mongoose.Schema({
     type: String,
 
     enum: {
-      values: ["Private", "Goverment"],
+      values: ["Private", "Government"],
       message: "Category must be either 'Private' or 'Government'",
     },
     trim: true,
