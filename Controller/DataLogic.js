@@ -391,7 +391,11 @@ const getAdmin = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    res.status(200).json({ success: true, isAdmin: user.role === "Admin" });
+    res.status(200).json({
+      success: true,
+      isAdmin: user.role === "Admin" || user.role === "Superadmin",
+      isSuperadmin: user.role === "Superadmin",
+    });
   } catch (error) {
     console.error("Error fetching user:", error.message);
     res.status(500).json({
