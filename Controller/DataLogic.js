@@ -150,7 +150,7 @@ const exportentry = async (req, res) => {
 const fetchEntries = async (req, res) => {
   try {
     let entries;
-    if (req.user.role === "Admin") {
+    if (req.user.role === "Admin" || req.user.role === "Superadmin") {
       entries = await Entry.find().populate("createdBy", "username").lean();
     } else {
       entries = await Entry.find({ createdBy: req.user.id })
