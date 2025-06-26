@@ -10,5 +10,6 @@ router.put("/editentry/:id", verifyToken, DataLogic.editEntry);
 router.get("/export", verifyToken, DataLogic.exportentry);
 router.post("/entries", verifyToken, DataLogic.bulkUploadStocks);
 router.get("/user-role", verifyToken, DataLogic.getAdmin);
+router.get("/users", verifyToken, DataLogic.getUsers);
 
 module.exports = router;

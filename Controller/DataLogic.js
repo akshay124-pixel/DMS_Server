@@ -20,9 +20,9 @@ const DataentryLogic = async (req, res) => {
       category,
       status,
       remarks,
+      estimatedValue,
     } = req.body;
 
-    // Validate required fields (excluding state and city)
     const requiredFields = {
       customerName,
       email,
@@ -44,7 +44,6 @@ const DataentryLogic = async (req, res) => {
       }
     }
 
-    // Validate product
     const validProducts = ["Ed-Tech", "Furniture", "AV"];
     if (!validProducts.includes(product.trim())) {
       return res.status(400).json({
@@ -61,7 +60,6 @@ const DataentryLogic = async (req, res) => {
       email: email.trim(),
       address: address.trim(),
       product: product.trim(),
-      // Include state and city without validation, default to empty string if undefined
       state: state ? state.trim() : "",
       city: city ? city.trim() : "",
       organization: organization.trim(),
@@ -69,6 +67,9 @@ const DataentryLogic = async (req, res) => {
       createdBy: req.user.id,
       ...(status && { status }),
       ...(remarks && { remarks: remarks.trim() }),
+      ...(estimatedValue && {
+        estimatedValue: parseFloat(estimatedValue) || null,
+      }),
     });
 
     await newEntry.save();
@@ -96,6 +97,67 @@ const DataentryLogic = async (req, res) => {
   }
 };
 
+// Get Users
+const getUsers = async (req, res) => {
+  try {
+    const normalizeRole = (role) =>
+      role
+        ? role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()
+        : "Others";
+    const userRole = normalizeRole(req.user.role);
+    console.log("getUsers: User ID:", req.user.id, "Role:", userRole);
+
+    if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+      return res.status(400).json({
+        success: false,
+        errorCode: "INVALID_USER_ID",
+        message: "Invalid user ID in token",
+      });
+    }
+
+    let users;
+    if (userRole === "Superadmin" || userRole === "Admin") {
+      users = await User.find().select("_id username role").lean();
+    } else {
+      users = await User.find({ _id: req.user.id })
+        .select("_id username role")
+        .lean();
+    }
+
+    if (!users.length) {
+      console.warn("No users found for role:", userRole);
+      return res.status(404).json({
+        success: false,
+        errorCode: "NO_USERS_FOUND",
+        message: "No users found.",
+      });
+    }
+
+    const normalizedUsers = users.map((user) => ({
+      _id: user._id.toString(),
+      username: user.username || "Unknown",
+      role: normalizeRole(user.role),
+    }));
+
+    console.log(
+      "Returning users:",
+      normalizedUsers.length,
+      normalizedUsers.map((u) => ({ _id: u._id, role: u.role }))
+    );
+    res.status(200).json({
+      success: true,
+      data: normalizedUsers,
+    });
+  } catch (error) {
+    console.error("getUsers Error:", error.message);
+    res.status(500).json({
+      success: false,
+      errorCode: "SERVER_ERROR",
+      message: "Failed to fetch users",
+      error: error.message,
+    });
+  }
+};
 // exportentry - Export entries to XLSX (filtered by role)
 const exportentry = async (req, res) => {
   try {
@@ -147,28 +209,65 @@ const exportentry = async (req, res) => {
 };
 
 // fetchEntries - Fetch entries based on role
+
 const fetchEntries = async (req, res) => {
   try {
+    const normalizedRole =
+      req.user.role.charAt(0).toUpperCase() +
+      req.user.role.slice(1).toLowerCase();
+    console.log("fetchEntries: User ID:", req.user.id, "Role:", normalizedRole);
+
+    if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+      return res.status(400).json({
+        success: false,
+        errorCode: "INVALID_USER_ID",
+        message: "Invalid user ID in token",
+      });
+    }
+
     let entries;
-    if (req.user.role === "Admin" || req.user.role === "Superadmin") {
-      entries = await Entry.find().populate("createdBy", "username").lean();
+    if (normalizedRole === "Admin" || normalizedRole === "Superadmin") {
+      entries = await Entry.find().populate("createdBy", "username _id").lean();
     } else {
       entries = await Entry.find({ createdBy: req.user.id })
-        .populate("createdBy", "username")
+        .populate("createdBy", "username _id")
         .lean();
     }
-    res.status(200).json(entries);
+
+    const normalizedEntries = entries.map((entry) => ({
+      ...entry,
+      _id: entry._id.toString(),
+      createdBy: {
+        _id: entry.createdBy?._id?.toString() || null,
+        username: entry.createdBy?.username || "Unknown",
+      },
+    }));
+
+    console.log(
+      "Fetched entries count:",
+      normalizedEntries.length,
+      "User roles:",
+      [
+        ...new Set(
+          normalizedEntries.map((e) => e.createdBy?.username || "Unknown")
+        ),
+      ]
+    );
+    res.status(200).json({
+      success: true,
+      data: normalizedEntries,
+    });
   } catch (error) {
     console.error("Error fetching entries:", error.message);
     res.status(500).json({
       success: false,
+      errorCode: "SERVER_ERROR",
       message: "Failed to fetch entries",
       error: error.message,
     });
   }
 };
-
-// DeleteData - Delete a single entry (only if created by user or admin)
+// DeleteData
 const DeleteData = async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -184,13 +283,19 @@ const DeleteData = async (req, res) => {
         .json({ success: false, message: "Entry not found" });
     }
 
+    const normalizedRole =
+      req.user.role.charAt(0).toUpperCase() +
+      req.user.role.slice(1).toLowerCase();
+
     if (
-      req.user.role !== "Admin" &&
+      normalizedRole !== "Admin" &&
+      normalizedRole !== "Superadmin" &&
       entry.createdBy.toString() !== req.user.id
     ) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
+    // Entry delete karo
     await Entry.findByIdAndDelete(req.params.id);
     res
       .status(200)
@@ -222,7 +327,12 @@ const editEntry = async (req, res) => {
       category,
       status,
       remarks,
+      closetype,
+      closeamount,
+      estimatedValue,
     } = req.body;
+
+    console.log("Incoming payload:", req.body);
 
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res
@@ -237,14 +347,17 @@ const editEntry = async (req, res) => {
         .json({ success: false, message: "Entry not found" });
     }
 
+    const normalizedRole =
+      req.user.role.charAt(0).toUpperCase() +
+      req.user.role.slice(1).toLowerCase();
     if (
-      req.user.role !== "Admin" &&
+      normalizedRole !== "Admin" &&
+      normalizedRole !== "Superadmin" &&
       entry.createdBy.toString() !== req.user.id
     ) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
-    // Validate product if provided
     if (product !== undefined) {
       const validProducts = ["Ed-Tech", "Furniture", "AV"];
       if (!validProducts.includes(product.trim())) {
@@ -256,21 +369,58 @@ const editEntry = async (req, res) => {
     }
 
     const updateData = {
-      ...(customerName !== undefined && { customerName: customerName.trim() }),
-      ...(contactName !== undefined && { contactName: contactName.trim() }),
-      ...(mobileNumber !== undefined && { mobileNumber: mobileNumber.trim() }),
-      ...(AlterNumber !== undefined && { AlterNumber: AlterNumber.trim() }),
-      ...(email !== undefined && { email: email.trim() }),
-      ...(address !== undefined && { address: address.trim() }),
-      ...(state !== undefined && { state: state.trim() }),
-      ...(city !== undefined && { city: city.trim() }),
-      ...(product !== undefined && { product: product.trim() }),
-      ...(organization !== undefined && { organization: organization.trim() }),
-      ...(category !== undefined && { category: category.trim() }),
+      ...(customerName !== undefined && {
+        customerName: customerName.trim() || entry.customerName,
+      }),
+      ...(contactName !== undefined && {
+        contactName: contactName.trim() || entry.contactName,
+      }),
+      ...(mobileNumber !== undefined && {
+        mobileNumber: mobileNumber.trim() || entry.mobileNumber,
+      }),
+      ...(AlterNumber !== undefined && {
+        AlterNumber: AlterNumber.trim() || entry.AlterNumber,
+      }),
+      ...(email !== undefined && { email: email.trim() || entry.email }),
+      ...(address !== undefined && {
+        address: address.trim() || entry.address,
+      }),
+      ...(state !== undefined && { state: state.trim() || "" }),
+      ...(city !== undefined && { city: city.trim() || "" }),
+      ...(product !== undefined && {
+        product: product.trim() || entry.product,
+      }),
+      ...(organization !== undefined && {
+        organization: organization.trim() || entry.organization,
+      }),
+      ...(category !== undefined && {
+        category: category.trim() || entry.category,
+      }),
       ...(status !== undefined && { status }),
-
       ...(remarks !== undefined && { remarks: remarks ? remarks.trim() : "" }),
+      ...(estimatedValue !== undefined && {
+        estimatedValue: parseFloat(estimatedValue) || null,
+      }),
     };
+
+    if (status === "Closed") {
+      if (
+        !closetype ||
+        !["Closed Won", "Closed Lost"].includes(closetype.trim())
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Close type must be 'Closed Won' or 'Closed Lost' when status is 'Closed'.",
+        });
+      }
+      updateData.closetype = closetype.trim();
+      updateData.closeamount = parseFloat(closeamount) || null;
+    } else {
+      updateData.closetype = "";
+      updateData.closeamount = null;
+    }
+    console.log("Update data:", updateData);
 
     const updatedEntry = await Entry.findByIdAndUpdate(
       req.params.id,
@@ -289,6 +439,7 @@ const editEntry = async (req, res) => {
   } catch (error) {
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map((err) => err.message);
+      console.error("Validation errors:", messages);
       return res.status(400).json({
         success: false,
         message: "Validation failed",
@@ -303,7 +454,6 @@ const editEntry = async (req, res) => {
     });
   }
 };
-
 // bulkUploadStocks - Bulk upload entries
 const bulkUploadStocks = async (req, res) => {
   try {
@@ -414,4 +564,5 @@ module.exports = {
   editEntry,
   exportentry,
   getAdmin,
+  getUsers,
 };

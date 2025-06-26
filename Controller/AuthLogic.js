@@ -1,7 +1,8 @@
 const User = require("../Schema/Model");
 const bcrypt = require("bcrypt");
 const { generateToken } = require("../utils/config jwt");
-
+const jwt = require("jsonwebtoken");
+const secretkey = require("../utils/config cypt");
 // Signup Controller
 const Signup = async (req, res) => {
   try {
@@ -51,39 +52,56 @@ const Signup = async (req, res) => {
 const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).lean();
     if (!user) {
-      console.error("User not found:", email);
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "User not found" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.error("Incorrect password for user:", email);
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user);
+    const payload = {
+      id: user._id.toString(),
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    };
+    console.log("Login: Generating token for user:", payload); // Debug log
+    const token = jwt.sign(payload, secretkey, {
+      expiresIn: "1h",
+    });
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login successful",
-      user: {
-        id: user._id.toString(),
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
       token,
+      user: {
+        id: user._id,
+        username: user.username,
+        role: user.role,
+        isAdmin: user.role === "Admin",
+        isSuperadmin: user.role === "Superadmin",
+      },
     });
   } catch (error) {
-    console.error("Login Error:", error);
-    return res.status(500).json({ message: "An error occurred during login." });
+    console.error("Login Error:", error.message);
+    return res.status(500).json({ message: "Server error during login" });
+  }
+};
+const getUserRole = async (req, res) => {
+  try {
+    console.log("getUserRole: userId:", req.user.id, "role:", req.user.role); // Debug log
+    return res.status(200).json({
+      id: req.user.id,
+      role: req.user.role,
+      isAdmin: req.user.role === "Admin",
+      isSuperadmin: req.user.role === "Superadmin",
+    });
+  } catch (error) {
+    console.error("getUserRole Error:", error.message);
+    return res.status(500).json({ message: "Failed to fetch user role" });
   }
 };
 
-module.exports = { Signup, Login };
+module.exports = { Signup, Login, getUserRole };

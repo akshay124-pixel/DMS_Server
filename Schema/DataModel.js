@@ -71,12 +71,18 @@ const EntrySchema = new mongoose.Schema({
   status: {
     type: String,
     enum: {
-      values: ["Interested", "Not Interested", "Maybe", "Not Found"],
+      values: ["Interested", "Not Interested", "Maybe", "Closed", "Not Found"],
       message:
         "Status must be either 'Interested', 'Not Interested', 'Maybe', or 'Not Found'",
     },
     default: "Not Found",
   },
+  closetype: {
+    type: String,
+    enum: ["Closed Won", "Closed Lost", ""],
+    default: "",
+  },
+  closeamount: { type: Number, min: 0 },
   remarks: {
     type: String,
     trim: true,
