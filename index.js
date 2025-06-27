@@ -15,12 +15,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "50mb" })); // Increase payload limit to 50MB
+app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-// app.use((req, res, next) => {
-//   req.setTimeout(120000); // 120 seconds timeout
-//   next();
-// });
 
 // API Routes Middleware
 app.use("/auth", LoginRoute);
