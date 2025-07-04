@@ -401,6 +401,7 @@ const editEntry = async (req, res) => {
       ...(estimatedValue !== undefined && {
         estimatedValue: parseFloat(estimatedValue) || null,
       }),
+      updatedAt: new Date(),
     };
 
     if (status === "Closed") {
