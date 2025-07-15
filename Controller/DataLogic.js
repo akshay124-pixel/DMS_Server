@@ -70,6 +70,16 @@ const DataentryLogic = async (req, res) => {
       ...(estimatedValue && {
         estimatedValue: parseFloat(estimatedValue) || null,
       }),
+      history:
+        status && remarks
+          ? [
+              {
+                status,
+                remarks: remarks.trim(),
+                timestamp: new Date(),
+              },
+            ]
+          : [],
     });
 
     await newEntry.save();
@@ -404,6 +414,22 @@ const editEntry = async (req, res) => {
       updatedAt: new Date(),
     };
 
+    // Track changes to status and remarks for history only if both are updated
+    if (
+      status !== undefined &&
+      status !== entry.status &&
+      remarks !== undefined &&
+      remarks.trim() !== (entry.remarks || "")
+    ) {
+      updateData.$push = {
+        history: {
+          status,
+          remarks: remarks.trim(),
+          timestamp: new Date(),
+        },
+      };
+    }
+
     if (status === "Closed") {
       if (
         !closetype ||
@@ -421,6 +447,7 @@ const editEntry = async (req, res) => {
       updateData.closetype = "";
       updateData.closeamount = null;
     }
+
     console.log("Update data:", updateData);
 
     const updatedEntry = await Entry.findByIdAndUpdate(
@@ -455,6 +482,7 @@ const editEntry = async (req, res) => {
     });
   }
 };
+
 // bulkUploadStocks - Bulk upload entries
 const bulkUploadStocks = async (req, res) => {
   try {

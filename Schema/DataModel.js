@@ -110,6 +110,31 @@ const EntrySchema = new mongoose.Schema({
     ref: "User",
     required: [true, "Created by user is required"],
   },
+  history: [
+    {
+      status: {
+        type: String,
+        enum: [
+          "Interested",
+          "Not Interested",
+          "Maybe",
+          "Closed",
+          "Not",
+          "Service",
+          "Not Found",
+        ],
+      },
+      remarks: {
+        type: String,
+        trim: true,
+        maxlength: [500, "Remarks cannot exceed 500 characters"],
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 });
 
 EntrySchema.pre("save", function (next) {
