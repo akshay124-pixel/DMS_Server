@@ -414,17 +414,13 @@ const editEntry = async (req, res) => {
       updatedAt: new Date(),
     };
 
-    // Track changes to status and remarks for history only if both are updated
-    if (
-      status !== undefined &&
-      status !== entry.status &&
-      remarks !== undefined &&
-      remarks.trim() !== (entry.remarks || "")
-    ) {
+    // Track any update to the entry for history
+    const hasUpdates = Object.keys(updateData).length > 1; // Exclude updatedAt
+    if (hasUpdates) {
       updateData.$push = {
         history: {
-          status,
-          remarks: remarks.trim(),
+          status: status !== undefined ? status : entry.status, // Use current status or existing
+          remarks: remarks !== undefined ? remarks.trim() : "", // Use provided remarks or empty
           timestamp: new Date(),
         },
       };
@@ -482,7 +478,6 @@ const editEntry = async (req, res) => {
     });
   }
 };
-
 // bulkUploadStocks - Bulk upload entries
 const bulkUploadStocks = async (req, res) => {
   try {
