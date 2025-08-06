@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const dbconnect = require("./utils/db.connect");
 const cors = require("cors");
@@ -9,7 +10,7 @@ const port = 4000;
 
 // CORS options
 const corsOptions = {
-  origin: "https://dms-jade.vercel.app",
+  origin: process.env.APP_URL,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
 };
