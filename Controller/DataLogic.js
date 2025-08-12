@@ -94,14 +94,15 @@ const DataentryLogic = async (req, res) => {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
+        message: "Some inputs are incorrect. Please check and try again.",
         errors: messages,
       });
     }
     console.error("Error in DataentryLogic:", error.message);
     res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message:
+        "Oops! Something went wrong on our side. Please try again later.",
       error: error.message,
     });
   }
@@ -163,7 +164,8 @@ const getUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       errorCode: "SERVER_ERROR",
-      message: "Failed to fetch users",
+      message:
+        "We couldn't retrieve the user list right now. Please try again later.",
       error: error.message,
     });
   }
@@ -231,7 +233,8 @@ const fetchEntries = async (req, res) => {
       return res.status(400).json({
         success: false,
         errorCode: "INVALID_USER_ID",
-        message: "Invalid user ID in token",
+        message:
+          "The user ID provided in your session is invalid. Please log out and log back in.",
       });
     }
 
@@ -263,6 +266,7 @@ const fetchEntries = async (req, res) => {
         ),
       ]
     );
+
     res.status(200).json({
       success: true,
       data: normalizedEntries,
@@ -272,25 +276,31 @@ const fetchEntries = async (req, res) => {
     res.status(500).json({
       success: false,
       errorCode: "SERVER_ERROR",
-      message: "Failed to fetch entries",
+      message:
+        "We couldn’t retrieve your entries at the moment. Please try again later.",
       error: error.message,
     });
   }
 };
+
 // DeleteData
 const DeleteData = async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid entry ID" });
+      return res.status(400).json({
+        success: false,
+        message:
+          "The entry ID you provided is not valid. Please check and try again.",
+      });
     }
 
     const entry = await Entry.findById(req.params.id);
     if (!entry) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Entry not found" });
+      return res.status(404).json({
+        success: false,
+        message:
+          "We could not find the entry you are trying to delete. It might have already been removed.",
+      });
     }
 
     const normalizedRole =
@@ -302,19 +312,26 @@ const DeleteData = async (req, res) => {
       normalizedRole !== "Superadmin" &&
       entry.createdBy.toString() !== req.user.id
     ) {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
+      return res.status(403).json({
+        success: false,
+        message:
+          "You do not have permission to delete this entry. Please contact your administrator if you think this is a mistake.",
+      });
     }
 
-    // Entry delete karo
+    // Delete the entry
     await Entry.findByIdAndDelete(req.params.id);
-    res
-      .status(200)
-      .json({ success: true, message: "Entry deleted successfully" });
+
+    res.status(200).json({
+      success: true,
+      message: "Entry has been deleted successfully.",
+    });
   } catch (error) {
     console.error("Error deleting entry:", error.message);
     res.status(500).json({
       success: false,
-      message: "Failed to delete entry",
+      message:
+        "We ran into an issue while trying to delete the entry. Please try again later or contact support.",
       error: error.message,
     });
   }
@@ -345,16 +362,20 @@ const editEntry = async (req, res) => {
     console.log("Incoming payload:", req.body);
 
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid entry ID" });
+      return res.status(400).json({
+        success: false,
+        message:
+          "The entry ID provided is not valid. Please check and try again.",
+      });
     }
 
     const entry = await Entry.findById(req.params.id);
     if (!entry) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Entry not found" });
+      return res.status(404).json({
+        success: false,
+        message:
+          "We could not find the entry you are trying to update. It might have been deleted.",
+      });
     }
 
     const normalizedRole =
@@ -365,7 +386,11 @@ const editEntry = async (req, res) => {
       normalizedRole !== "Superadmin" &&
       entry.createdBy.toString() !== req.user.id
     ) {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
+      return res.status(403).json({
+        success: false,
+        message:
+          "You do not have permission to update this entry. Please contact your administrator if you believe this is an error.",
+      });
     }
 
     if (product !== undefined) {
@@ -373,7 +398,8 @@ const editEntry = async (req, res) => {
       if (!validProducts.includes(product.trim())) {
         return res.status(400).json({
           success: false,
-          message: "Product must be one of 'Ed-Tech', 'Furniture', or 'AV'.",
+          message:
+            "Invalid product selected. Please choose from 'Ed-Tech', 'Furniture', or 'AV'.",
         });
       }
     }
@@ -415,12 +441,12 @@ const editEntry = async (req, res) => {
     };
 
     // Track any update to the entry for history
-    const hasUpdates = Object.keys(updateData).length > 1; // Exclude updatedAt
+    const hasUpdates = Object.keys(updateData).length > 1; // updatedAt is always present
     if (hasUpdates) {
       updateData.$push = {
         history: {
-          status: status !== undefined ? status : entry.status, // Use current status or existing
-          remarks: remarks !== undefined ? remarks.trim() : "", // Use provided remarks or empty
+          status: status !== undefined ? status : entry.status,
+          remarks: remarks !== undefined ? remarks.trim() : "",
           timestamp: new Date(),
         },
       };
@@ -434,7 +460,7 @@ const editEntry = async (req, res) => {
         return res.status(400).json({
           success: false,
           message:
-            "Close type must be 'Closed Won' or 'Closed Lost' when status is 'Closed'.",
+            "When closing an entry, please specify if it is 'Closed Won' or 'Closed Lost'.",
         });
       }
       updateData.closetype = closetype.trim();
@@ -458,7 +484,7 @@ const editEntry = async (req, res) => {
     res.status(200).json({
       success: true,
       data: updatedEntry,
-      message: "Entry updated successfully",
+      message: "Entry updated successfully.",
     });
   } catch (error) {
     if (error.name === "ValidationError") {
@@ -466,18 +492,21 @@ const editEntry = async (req, res) => {
       console.error("Validation errors:", messages);
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
+        message:
+          "Some fields contain invalid data. Please review your inputs and try again.",
         errors: messages,
       });
     }
     console.error("Error in editEntry:", error.message);
     res.status(500).json({
       success: false,
-      message: "Error updating entry",
+      message:
+        "We encountered an error while updating your entry. Please try again later or contact support if the problem persists.",
       error: error.message,
     });
   }
 };
+
 // bulkUploadStocks - Bulk upload entries
 const bulkUploadStocks = async (req, res) => {
   try {
@@ -486,7 +515,8 @@ const bulkUploadStocks = async (req, res) => {
     if (!Array.isArray(newEntries) || newEntries.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Invalid data format. Array of entries expected.",
+        message:
+          "The uploaded data is not in the correct format. Please upload a list of entries.",
       });
     }
 
@@ -525,44 +555,55 @@ const bulkUploadStocks = async (req, res) => {
         await Entry.insertMany(batch, { ordered: false });
         insertedCount += batch.length;
       } catch (batchError) {
-        errors.push(`Batch ${i / batchSize + 1}: ${batchError.message}`);
+        // Simplify error message for non-tech users
+        errors.push(
+          `Upload problem in batch ${
+            i / batchSize + 1
+          }: Some entries could not be saved. Please check your data and try again.`
+        );
       }
     }
 
     if (errors.length > 0) {
       return res.status(207).json({
         success: true,
-        message: `Partially uploaded ${insertedCount} entries`,
+        message: `Some entries were uploaded successfully (${insertedCount}), but there were issues with others.`,
         errors,
       });
     }
 
     res.status(201).json({
       success: true,
-      message: `Successfully uploaded ${insertedCount} entries!`,
+      message: `All ${insertedCount} entries were uploaded successfully!`,
     });
   } catch (error) {
     console.error("Error in bulk upload:", error.message);
     res.status(400).json({
       success: false,
-      message: `Failed to upload entries: ${error.message}`,
+      message:
+        "We couldn't upload your data due to a problem. Please check the file and try again. If the issue continues, contact support.",
     });
   }
 };
+
 // getAdmin - Check if user is admin
 const getAdmin = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized: No user found" });
+      return res.status(401).json({
+        success: false,
+        message:
+          "You are not logged in or your session has expired. Please log in again to continue.",
+      });
     }
 
     const user = await User.findById(req.user.id).lean();
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message:
+          "We couldn't find your user information. Please try logging in again or contact support if the issue persists.",
+      });
     }
 
     res.status(200).json({
@@ -574,7 +615,8 @@ const getAdmin = async (req, res) => {
     console.error("Error fetching user:", error.message);
     res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message:
+        "Something went wrong on our side while fetching your details. Please try again later. If the problem continues, contact support.",
       error: error.message,
     });
   }

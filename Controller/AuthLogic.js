@@ -31,7 +31,8 @@ const Signup = async (req, res) => {
     const token = generateToken(newUser);
 
     res.status(201).json({
-      message: "User created successfully",
+      message: "Your account has been created successfully!",
+
       user: {
         id: newUser._id.toString(),
         username: newUser.username,
@@ -42,9 +43,10 @@ const Signup = async (req, res) => {
     });
   } catch (error) {
     console.error("Signup Error:", error);
-    return res
-      .status(500)
-      .json({ message: "An error occurred during signup." });
+    return res.status(500).json({
+      message:
+        "Something went wrong while creating your account. Please try again later.",
+    });
   }
 };
 
@@ -86,7 +88,10 @@ const Login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login Error:", error.message);
-    return res.status(500).json({ message: "Server error during login" });
+    return res.status(500).json({
+      message:
+        "Oops! Something went wrong while logging you in. Please try again later.",
+    });
   }
 };
 const getUserRole = async (req, res) => {
@@ -100,7 +105,10 @@ const getUserRole = async (req, res) => {
     });
   } catch (error) {
     console.error("getUserRole Error:", error.message);
-    return res.status(500).json({ message: "Failed to fetch user role" });
+    return res.status(500).json({
+      message:
+        "Sorry, we couldn’t fetch your user role right now. Please try again later.",
+    });
   }
 };
 
