@@ -441,7 +441,7 @@ const editEntry = async (req, res) => {
     };
 
     // Track any update to the entry for history
-    const hasUpdates = Object.keys(updateData).length > 1; // updatedAt is always present
+    const hasUpdates = Object.keys(updateData).length > 1; 
     if (hasUpdates) {
       updateData.$push = {
         history: {
